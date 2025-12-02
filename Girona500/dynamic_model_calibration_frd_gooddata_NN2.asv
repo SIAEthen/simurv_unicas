@@ -1,0 +1,56 @@
+close all
+% load data
+data = load("Girona500/high_quality_data.txt");
+q = data(:,8:11)';
+tau_body_frame = data(:,12:17)';
+% for fix bugs
+% tau_body_frame(4:6,:) = -1 * tau_body_frame(4:6,:);
+
+eta = data(:,18:24)';
+deta = data(:,25:30)';
+
+rpy = 0*eta(1:3,:);
+for i=1:size(rpy,2)
+    rpy(:,i) = Quat2Rpy(eta(4:7,i));
+end
+
+input_all = [rpy(1:2,:); q]';
+
+output_all = tau_body_frame';
+
+num_of_data = size(input_all,1);
+num_of_train = 1000;
+num_of_validation = size(input_all,1)-1000;
+X_train = input_all(1:num_of_train,:);
+Y_train = output_all(1:num_of_train,:);
+
+X_val = input_all(num_of_train+1:num_of_data,:);
+Y_val = output_all(num_of_train+1:num_of_data,:);
+
+% 定义网络结构
+layers = [
+    featureInputLayer(6)
+    fullyConnectedLayer(32)
+    reluLayer
+    fullyConnectedLayer(16)
+    reluLayer
+    fullyConnectedLayer(6)
+    myRegressionLayer
+];
+
+options = trainingOptions('adam', ...
+    'MaxEpochs', 100, ...
+    'MiniBatchSize', 64, ...
+    'Plots', 'training-progress', ...
+    'Verbose', false);
+
+net = trainNetwork(X_train, Y_train, layers, options);
+
+% 测试
+Y_predict = predict(net, X_val);
+error = Y_predict - Y_val;
+for i =1:6
+figure
+hi
+
+end

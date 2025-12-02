@@ -1,0 +1,18 @@
+ 1 - end-effector error position norm
+ 2 - end-effector obstacle avoidance
+ 3 - end-effector position error
+ 4 - end-effector orientation error
+ 5 - end-effector configuration error
+ 6 - end-effector field-of-view error
+ 7 - end-effector field-of-view "cameraman" error
+ 8 - single joint position
+ 9 - robot nominal position
+10 - vehicle orientation
+11 - vehicle yaw
+12 - vehicle roll-pitch
+13 - vehicle error position norm
+14 - vehicle obstacle avoidance
+15 - distance from mechanical joint limits version 1
+16 - distance from mechanical joint limits version 2
+17 - end-effector field-of-view "cameraman" error second version with spherical coordinates
+18 - end-effector error position norm version 2

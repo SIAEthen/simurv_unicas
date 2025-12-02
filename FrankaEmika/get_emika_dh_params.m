@@ -1,0 +1,35 @@
+digits(5);  %将 MATLAB 的符号计算精度设置为 5 位有效数字
+% a alpha d theta
+a = [0,0,0,0.0825,-0.0825,0.0,0.088,0.0]';
+alpha = [0,-pi/2,pi/2,pi/2,-pi/2,pi/2,pi/2,0.0]';
+d = [0.333,0.0,0.316,0.0,0.384,0.0,0.0,0.107]';
+theta = [0,0,0,0,0,0,0,0]';
+emika_dh_parameters = [a alpha d theta];
+%% DH
+offset_i = theta;
+L(1)=Link([theta(1),d(1),a(1),alpha(1),0,offset_i(1)],'modified');
+L(2)=Link([theta(2),d(2),a(2),alpha(2),0,offset_i(2)],'modified');
+L(3)=Link([theta(3),d(3),a(3),alpha(3),0,offset_i(3)],'modified');
+L(4)=Link([theta(4),d(4),a(4),alpha(4),0,offset_i(4)],'modified');
+L(5)=Link([theta(5),d(5),a(5),alpha(5),0,offset_i(5)],'modified');
+L(6)=Link([theta(6),d(6),a(6),alpha(6),0,offset_i(6)],'modified');
+L(7)=Link([theta(7),d(7),a(7),alpha(7),0,offset_i(7)],'modified');
+% L(8)=Link([theta(8),d(8),a(8),alpha(8),0,offset_i(8)],'modified');
+a_i     = a';
+alpha_i = alpha';
+d_i     = d';
+theta_i = theta';
+Arm = SerialLink(L);
+Arm.name = ("FrankaEmika");
+% pos_i = pos(1:7,1)';
+% pos_i(7) = 0;
+% Arm.plot(pos_i)
+% Arm.teach()
+% Arm.teach()
+% q_test = [0.1,0.2,0.3,0.4, 0.5,0.6,0.7];
+% for i=1:100
+% q_test = rand(1,7);
+% J1 = jacobian_mdh([emika_dh_parameters(1:7,1:3) emika_dh_parameters(1:7,4)+q_test']);
+% % norm(Arm.jacob0(q_test)- J1,2)
+% Arm.jacob0(q_test)- J1
+% end
