@@ -1,0 +1,107 @@
+a = [0,0,0,0.0825,-0.0825,0.0,0.088,0.0]';
+alpha = [0,-pi/2,pi/2,pi/2,-pi/2,pi/2,pi/2,0.0]';
+d = [0.333,0.0,0.316,0.0,0.384,0.0,0.0,0.107]';
+theta = [0,0,0,0,0,0,0,0]';
+emika_dh_parameters = [a alpha d theta];
+mdh = emika_dh_parameters; %MDH
+
+
+
+F_e_mea = [];
+F_e_pre = [];
+F_e_pre_4 = [];
+rosshutdown
+rosinit
+
+jointsub = rossubscriber("/joint_states","DataFormat","struct");
+forcesub = rossubscriber("/franka_state_controller/F_ext","DataFormat","struct");
+forcepub = rospublisher("/F_ext_observed","geometry_msgs/Wrench","DataFormat","struct");
+tic
+npti = 10000;
+for i=1:npti
+    jointdata = receive(jointsub,10);
+    forcedata = receive(forcesub,10);
+    
+
+    F_ext_i = [forcedata.Wrench.Force.X forcedata.Wrench.Force.Y forcedata.Wrench.Force.Z ...
+        forcedata.Wrench.Torque.X forcedata.Wrench.Torque.Y forcedata.Wrench.Torque.Z]';
+    q_i = jointdata.Position(1:7);
+    q_i(7) = q_i(7)-0.7625;
+    tau_i = jointdata.Effort(1:7);
+    
+    mdh_i = mdh;
+    mdh_i(1:7,:) =  [mdh(1:7,1:3) mdh(1:7,4) + q_i];
+    
+    J3_i = jacobian_mdh(mdh_i(1:3,:));
+    J4_i = jacobian_mdh(mdh_i(1:4,:));
+    J5_i = jacobian_mdh(mdh_i(1:5,:));
+    J6_i = jacobian_mdh(mdh_i(1:6,:));
+    J7_i = jacobian_mdh(mdh_i(1:7,:));
+    J8_i = jacobian_mdh(mdh_i(1:8,:));
+    
+    g_i = get_emika_gravity(q_i(1:7)); % it is the same with same joint configuration
+    tau_e = tau_i - g_i;
+    
+    
+    T_3_0 = DirectKinematics_mdh(mdh_i(1:3,:));
+    T_4_0 = DirectKinematics_mdh(mdh_i(1:4,:));
+    T_5_0 = DirectKinematics_mdh(mdh_i(1:5,:));
+    T_6_0 = DirectKinematics_mdh(mdh_i(1:6,:));
+    T_7_0 = DirectKinematics_mdh(mdh_i(1:7,:));
+    
+    F_pre_i = pinv(J7_i')*tau_e;
+    % tau_e_notorque = tau_e - J7_i(4:6,:)'*f_e_mea(4:6);
+    tau_e_notorque = tau_e;
+    F_pre_4_i = pinv(J8_i(1:3,1:4)')*tau_e_notorque(1:4); % in R3
+    % f_e_pre_2 = pinv(J7_i(1:3,1:4)')*tau_e(1:4);
+    F_pre_4_i = T_7_0(1:3,1:3)' * F_pre_4_i;
+
+
+    F_e_mea = [F_e_mea  F_ext_i(1:3)];
+    F_e_pre = [F_e_pre  F_pre_i(1:3)];
+    F_e_pre_4 = [F_e_pre_4 F_pre_4_i];
+    
+    
+    forcemsg = rosmessage(forcepub);
+    forcemsg.Force.X = F_pre_4_i(1);
+    forcemsg.Force.Y = F_pre_4_i(2);
+    forcemsg.Force.Z = F_pre_4_i(3);
+    send(forcepub,forcemsg)
+end
+toc
+
+rosshutdown
+
+
+t=1:npti;
+figure
+plot(t,F_e_mea,t,F_e_pre)
+legend("mea1","mea2","mea3","pre1","pre2","pre3")
+xlabel("time (s)")
+ylabel("F (N)")
+grid
+title("F_e in base frame (with 7 joints)")
+
+figure
+plot(t,F_e_mea,t,F_e_pre_4)
+legend("mea1","mea2","mea3","pre1","pre2","pre3")
+xlabel("time (s)")
+ylabel("F (N)")
+grid
+title("F_e in base frame (with 4 joints)")
+
+figure
+subplot(3,1,1)
+
+subplot(3,1,2)
+
+subplot(3,1,3)
+% 
+% figure
+% plot(t,F_e_mea-F_e_pre)
+% legend("1","2","3")
+% xlabel("time (s)")
+% ylabel("F (N)")
+% grid
+% title("Prediction error in base frame")
+
