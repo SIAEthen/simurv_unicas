@@ -16,14 +16,12 @@ S.dt   = 0.03;
 F_e_mea = [];
 F_e_pre = [];
 F_e_pre_4 = [];
-% rosshutdown
+rosshutdown
 rosinit
 
 jointsub = rossubscriber("/joint_states","DataFormat","struct");
 forcesub = rossubscriber("/franka_state_controller/F_ext","DataFormat","struct");
-forcepub_base = rospublisher("/F_ext_observed_base","geometry_msgs/Wrench","DataFormat","struct");
-forcepub_ee = rospublisher("/F_ext_observed_ee","geometry_msgs/Wrench","DataFormat","struct");
-cmdpub = rospublisher("/cartesian_pos_cmd","geometry_msgs/Vector3","DataFormat","struct");
+forcepub = rospublisher("/F_ext_observed","geometry_msgs/Wrench","DataFormat","struct");
 tic
 npti = 10000;
 
@@ -62,18 +60,9 @@ for i=1:npti
     % tau_e_notorque = tau_e - J7_i(4:6,:)'*f_e_mea(4:6);
     tau_e_notorque = tau_e;
     F_pre_4_i = pinv(J8_i(1:3,1:4)')*tau_e_notorque(1:4); % in R3
-    S.Fext = F_pre_4_i;
     S = admittance3dof(S);
-    % [S.x_r,S.dx_r,S.ddx_r]
+    [S.x_r,S.dx_r,S]
     % f_e_pre_2 = pinv(J7_i(1:3,1:4)')*tau_e(1:4);
-    F_pre_4_i'
-    forcemsg = rosmessage(forcepub_base);
-    forcemsg.Force.X = F_pre_4_i(1);
-    forcemsg.Force.Y = F_pre_4_i(2);
-    forcemsg.Force.Z = F_pre_4_i(3);
-    send(forcepub_base,forcemsg);
-
-
     F_pre_4_i = T_7_0(1:3,1:3)' * F_pre_4_i;
 
 
@@ -82,19 +71,11 @@ for i=1:npti
     F_e_pre_4 = [F_e_pre_4 F_pre_4_i];
     
     
-    forcemsg = rosmessage(forcepub_ee);
+    forcemsg = rosmessage(forcepub);
     forcemsg.Force.X = F_pre_4_i(1);
     forcemsg.Force.Y = F_pre_4_i(2);
     forcemsg.Force.Z = F_pre_4_i(3);
-    send(forcepub_ee,forcemsg);
-
-    cmdmsg = rosmessage(cmdpub);
-
-    % cmdmsg.X = S.x_r(1);
-    % cmdmsg.Y = S.x_r(2);
-    % cmdmsg.Z = S.x_r(3);
-    % send(cmdpub,cmdmsg);
-
+    send(forcepub,forcemsg)
 end
 toc
 
