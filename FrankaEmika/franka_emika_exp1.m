@@ -5,7 +5,8 @@ theta = [0,0,0,0,0,0,0,0]';
 emika_dh_parameters = [a alpha d theta];
 mdh = emika_dh_parameters; %MDH
 
-
+tau_e_hat = [0,0,0,0,0,0,0]';
+K_obs = [1,1,1,1,1,1,1,1]';
 
 F_e_mea = [];
 F_e_pre = [];
@@ -41,6 +42,8 @@ for i=1:npti
     
     g_i = get_emika_gravity(q_i(1:7)); % it is the same with same joint configuration
     tau_e = tau_i - g_i;
+    dt = 0.03;
+    tau_e_hat = tau_e_hat + dt*K_obs.*(tau_e - tau_e_hat);
     
     
     T_3_0 = DirectKinematics_mdh(mdh_i(1:3,:));
@@ -50,8 +53,8 @@ for i=1:npti
     T_7_0 = DirectKinematics_mdh(mdh_i(1:7,:));
     
     F_pre_i = pinv(J7_i')*tau_e;
-    % tau_e_notorque = tau_e - J7_i(4:6,:)'*f_e_mea(4:6);
-    tau_e_notorque = tau_e;
+%     tau_e_notorque = tau_e; % no observer
+    tau_e_notorque = tau_e_hat; % with stupid observer
     F_pre_4_i = pinv(J8_i(1:3,1:4)')*tau_e_notorque(1:4); % in R3
     % f_e_pre_2 = pinv(J7_i(1:3,1:4)')*tau_e(1:4);
     F_pre_4_i = T_7_0(1:3,1:3)' * F_pre_4_i;
