@@ -21,6 +21,13 @@ tau = [T2.field_effort0,T2.field_effort1,T2.field_effort2,T2.field_effort3,T2.fi
 
 num = size(q,2);
 
+S.x_r    = [0; 0; 0];
+S.dx_r   = [0; 0; 0];
+S.ddx_r  = [0; 0; 0];      % will be overwritten
+S.xd   = [0; 0; 0];
+S.dxd  = [0; 0; 0];
+S.dt   = 0.03;
+
 F_e_mea = [];
 F_e_mea_2 = [];
 F_e_pre = [];
